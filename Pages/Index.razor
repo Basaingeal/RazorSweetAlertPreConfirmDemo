@@ -1,0 +1,44 @@
+﻿@page "/"
+@using System.Text.Json.Serialization
+@using CurrieTechnologies.Razor.SweetAlert2
+@inject IJSRuntime jsRuntime
+@inject SweetAlertService Swal
+
+<h1>SweetAlert2 PreConfirm Demo</h1>
+<strong>First Box: </strong> @textbox1
+<br />
+<strong>Second Box: </strong> @textbox2
+<br />
+<button @onclick="@FireSweetAlert" class="btn btn-primary">Update</button>
+
+@code {
+  string textbox1 = "";
+  string textbox2 = "";
+
+  async Task<string> getValuesFromBoxesAsync(string input)
+  {
+    string[] values = await jsRuntime.InvokeAsync<string[]>("getTextboxValues");
+
+    return JsonSerializer.ToString(values);
+  }
+
+  async Task FireSweetAlert()
+  {
+    SweetAlertResult result = await Swal.FireAsync(new SweetAlertOptions
+    {
+      Title = "Multiple inputs",
+      Html = $@"<input id=""swal-input1"" class=""swal2-input"">
+          <input id=""swal-input2"" class=""swal2-input"">",
+      FocusConfirm = false,
+      PreConfirm = new PreConfirmCallback(getValuesFromBoxesAsync, this)
+    });
+
+    if (result.Value != null)
+    {
+      string[] valuesInArray = JsonSerializer.Parse<string[]>(result.Value);
+      textbox1 = valuesInArray[0];
+      textbox2 = valuesInArray[1];
+    }
+  }
+}
+
